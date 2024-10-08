@@ -8,6 +8,7 @@
 package main
 
 import (
+	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
@@ -15,21 +16,35 @@ import (
 
 	"github.com/alitto/pond"
 	"github.com/pkg/errors"
-	"gitlab.com/iskaypetcom/digital/sre/tools/dev/go-logger/log"
 
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/arielsrv/go-metric/metrics"
 	"github.com/arielsrv/go-metric/metrics/collector"
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
 	router := mux.NewRouter()
 
-	pool := pond.New(100, 1000)
+	var config = struct {
+		MaxWorkers  int
+		MaxCapacity int
+	}{
+		MaxWorkers:  100,
+		MaxCapacity: 1000,
+	}
+
+	pool := pond.New(config.MaxWorkers, config.MaxCapacity)
+
+	collector.Prometheus.RecordValue("pool_max_workers", float64(config.MaxWorkers))
+	collector.Prometheus.RecordValue("pool_max_capacity", float64(config.MaxCapacity))
 
 	httpClient := &http.Client{
 		Timeout: time.Duration(10000) * time.Millisecond,
+		Transport: &http.Transport{
+			MaxConnsPerHost:     config.MaxWorkers,
+			MaxIdleConnsPerHost: config.MaxWorkers / 10,
+		},
 	}
 
 	collector.Prometheus.RecordValueFunc("pool_workers_running", func() float64 { return float64(pool.RunningWorkers()) })
@@ -82,18 +97,16 @@ func main() {
 			})
 		}
 
-		pool.StopAndWait()
-
 		writer.WriteHeader(http.StatusOK)
 		length, err := writer.Write([]byte("Record created"))
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 
-		log.Debugf("[metrics-collector]: Wrote %d bytes to response for record creation", length)
+		slog.Debug("[metrics-collector]: Wrote %d bytes to response for record creation", slog.Int("length", length))
 	})
 
-	log.Infof("Server started on :3000")
+	slog.Info("Server started on :3000")
 	if err := http.ListenAndServe(":3000", router); err != nil {
 		panic(err)
 	}

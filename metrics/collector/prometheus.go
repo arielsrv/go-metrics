@@ -2,14 +2,13 @@ package collector
 
 import (
 	"fmt"
+	"log/slog"
 	"maps"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/arielsrv/go-metric/metrics"
-
-	"gitlab.com/iskaypetcom/digital/sre/tools/dev/go-logger/log"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -39,13 +38,13 @@ func (r *collector) IncrementCounter(metricName string, tags ...metrics.Tags) {
 	labels := r.buildLabels(tags)
 	counterVec, err := r.getOrAddCounterVec(metricName, labels)
 	if err != nil {
-		log.Errorf("[metrics-collector]: Error getting or creating counter for %s: %v", metricName, err)
+		slog.Error("[metrics-collector]: Error getting or creating counter for %s: %v", metricName, err)
 		return
 	}
 
 	metric, err := counterVec.GetMetricWith(labels)
 	if err != nil {
-		log.Errorf("[metrics-collector]: Error getting metric for %s: %v", metricName, err)
+		slog.Error("[metrics-collector]: Error getting metric for %s: %v", metricName, err)
 		return
 	}
 
@@ -65,7 +64,7 @@ func (r *collector) IncrementCounterFunc(metricName string, counterFunc metrics.
 				}, counterFunc,
 			)
 			if err := prometheus.Register(counter); err != nil {
-				log.Errorf("[metrics-collector]: Error registering counterFunc for %s: %v", metricName, err)
+				slog.Error("[metrics-collector]: Error registering counterFunc for %s: %v", metricName, err)
 				return
 			}
 			countersFunc[metricName] = counter
@@ -86,7 +85,7 @@ func (r *collector) getOrAddCounterVec(metricName string, labels prometheus.Labe
 				}, slices.Collect(maps.Keys(labels)),
 			)
 			if err := prometheus.Register(counterVec); err != nil {
-				log.Errorf("[metrics-collector]: Error registering counterVec for %s: %v", metricName, err)
+				slog.Error("[metrics-collector]: Error registering counterVec for %s: %v", metricName, err)
 				return nil, err
 			}
 			counters[metricName] = counterVec
@@ -115,7 +114,7 @@ func (r *collector) getOrAddSummaryVec(metricName string, labels prometheus.Labe
 				}, slices.Collect(maps.Keys(labels)),
 			)
 			if err := prometheus.Register(summaryVec); err != nil {
-				log.Errorf("[metrics-collector]: Error registering sumaryVec for %s: %v", metricName, err)
+				slog.Error("[metrics-collector]: Error registering sumaryVec for %s: %v", metricName, err)
 				return nil, err
 			}
 			summaries[metricName] = summaryVec
@@ -131,13 +130,13 @@ func (r *collector) RecordExecutionTime(metricName string, duration time.Duratio
 	labels := r.buildLabels(tags)
 	summaryVec, err := r.getOrAddSummaryVec(metricName, labels)
 	if err != nil {
-		log.Errorf("[metrics-collector]: Error getting or creating summary for %s: %v", metricName, err)
+		slog.Error("[metrics-collector]: Error getting or creating summary for %s: %v", metricName, err)
 		return
 	}
 
 	metric, err := summaryVec.GetMetricWith(labels)
 	if err != nil {
-		log.Errorf("[metrics-collector]: Error getting metric for %s: %v", metricName, err)
+		slog.Error("[metrics-collector]: Error getting metric for %s: %v", metricName, err)
 		return
 	}
 
@@ -148,13 +147,13 @@ func (r *collector) RecordValue(metricName string, value float64, tags ...metric
 	labels := r.buildLabels(tags)
 	gaugeVec, err := r.getOrAddGaugeVec(metricName, labels)
 	if err != nil {
-		log.Errorf("[metrics-collector]: Error getting or creating gauge for %s: %v", metricName, err)
+		slog.Error("[metrics-collector]: Error getting or creating gauge for %s: %v", metricName, err)
 		return
 	}
 
 	metric, err := gaugeVec.GetMetricWith(labels)
 	if err != nil {
-		log.Errorf("[metrics-collector]: Error getting metric for %s: %v", metricName, err)
+		slog.Error("[metrics-collector]: Error getting metric for %s: %v", metricName, err)
 		return
 	}
 
@@ -174,7 +173,7 @@ func (r *collector) RecordValueFunc(metricName string, valueFunc metrics.RecordV
 				}, valueFunc,
 			)
 			if err := prometheus.Register(gaugeFunc); err != nil {
-				log.Errorf("[metrics-collector]: Error registering gaugeVec for %s: %v", metricName, err)
+				slog.Error("[metrics-collector]: Error registering gaugeVec for %s: %v", metricName, err)
 				return
 			}
 			gaugesFunc[metricName] = gaugeFunc
@@ -195,7 +194,7 @@ func (r *collector) getOrAddGaugeVec(metricName string, labels prometheus.Labels
 				}, slices.Collect(maps.Keys(labels)),
 			)
 			if err := prometheus.Register(gaugeVec); err != nil {
-				log.Errorf("[metrics-collector]: Error registering gaugeVec for %s: %v", metricName, err)
+				slog.Error("[metrics-collector]: Error registering gaugeVec for %s: %v", metricName, err)
 				return nil, err
 			}
 			gauges[metricName] = gaugeVec

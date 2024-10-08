@@ -1,13 +1,12 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/arielsrv/go-metric/metrics"
 	"github.com/arielsrv/go-metric/metrics/collector"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"gitlab.com/iskaypetcom/digital/sre/tools/dev/go-logger/log"
+	"log/slog"
+	"net/http"
 )
 
 func main() {
@@ -30,10 +29,10 @@ func main() {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 
-		log.Debugf("[metrics-collector]: Wrote %d bytes to response for record creation", length)
+		slog.Debug("[metrics-collector]: Wrote %d bytes to response for record creation", slog.Int("length", length))
 	})
 
-	log.Infof("Server started on :3000")
+	slog.Info("Server started on :3000")
 	if err := http.ListenAndServe(":3000", router); err != nil {
 		panic(err)
 	}

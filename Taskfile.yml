@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://json.schemastore.org/taskfile.json
+version: '3'
+
+tasks:
+    lint:
+        desc: Use golangci-lint (.golangci.yml).
+        cmds:
+            - go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run --fix
+            - go run mvdan.cc/gofumpt@latest -w -l .
+            - go run github.com/dkorunic/betteralign/cmd/betteralign@latest -test_files -generated_files -apply ./...
+    test:unit:
+        desc: Unit test
+        cmds:
+            - go test ./... -v
+    test:race:
+        desc: Race condition test
+        cmds:
+            - go test --race ./... -v
+    test:mock:
+        desc: Create mocks
+        cmds:
+            - mockery --config .mockery.yaml
+    download:
+        desc: Run go mod tidy.
+        cmds:
+            - go mod tidy
+    upgrade:
+        desc: Check for latest direct dependencies.
+        cmds:
+            - go-mod-upgrade

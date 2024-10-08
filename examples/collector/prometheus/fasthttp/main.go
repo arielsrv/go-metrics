@@ -6,7 +6,7 @@ import (
 	"github.com/arielsrv/go-metric/metrics/collector"
 	"github.com/gofiber/fiber/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	"gitlab.com/iskaypetcom/digital/sre/tools/dev/go-logger/log"
+	"log/slog"
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 	fiberPrometheus.RegisterAt(server, "/metrics")
 	server.Use(fiberPrometheus.Middleware)
 
-	log.Infof("Server started on :3000")
+	slog.Info("Server started on :3000")
 	if err := server.Listen(":3000"); err != nil {
 		panic(err)
 	}

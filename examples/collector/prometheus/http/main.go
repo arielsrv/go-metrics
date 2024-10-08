@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/alitto/pond"
 	"github.com/pkg/errors"
-	"gitlab.com/iskaypetcom/digital/sre/tools/dev/go-logger/log"
 
 	"github.com/arielsrv/go-metric/metrics"
 	"github.com/arielsrv/go-metric/metrics/collector"
@@ -96,10 +96,10 @@ func main() {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 		}
 
-		log.Debugf("[metrics-collector]: Wrote %d bytes to response for record creation", length)
+		slog.Debug("[metrics-collector]: Wrote %d bytes to response for record creation", slog.Int("length", length))
 	})
 
-	log.Infof("Server started on :3000")
+	slog.Info("Server started on :3000")
 	if err := http.ListenAndServe(":3000", router); err != nil {
 		panic(err)
 	}

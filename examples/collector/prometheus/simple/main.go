@@ -1,39 +1,33 @@
 package main
 
 import (
-	"github.com/arielsrv/go-metric/metrics"
-	"github.com/arielsrv/go-metric/metrics/collector"
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log/slog"
 	"net/http"
+	"time"
+
+	"github.com/arielsrv/go-metric/metrics"
+
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
 	router := mux.NewRouter()
 	router.Handle("/metrics", promhttp.Handler())
 
-	router.HandleFunc("/record/{id}", func(writer http.ResponseWriter, request *http.Request) {
-		vars := mux.Vars(request)
-		id, found := vars["id"]
-		if !found {
-			http.Error(writer, "missing id", http.StatusBadRequest)
-			return
-		}
+	// counters
+	metrics.Collector.Prometheus().IncrementCounter("business_counter", metrics.Tags{"type": "example"})
+	metrics.Collector.Prometheus().IncrementCounter("business_counter", metrics.Tags{"type": "example"})
 
-		collector.Prometheus.IncrementCounter("record", metrics.Tags{"id": id})
+	// fixed values
+	metrics.Collector.Prometheus().RecordValue("business_value", 100, map[string]string{"section": "pdp"})
 
-		writer.WriteHeader(http.StatusOK)
-		length, err := writer.Write([]byte("record created"))
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-		}
+	// duration, percentiles
+	start := time.Now()
+	metrics.Collector.Prometheus().RecordExecutionTime("business_request_duration", time.Since(start), map[string]string{"path": "/api/v1/products"})
 
-		slog.Debug("[metrics-collector]: Wrote %d bytes to response for record creation", slog.Int("length", length))
-	})
-
-	slog.Info("Server started on :3000")
-	if err := http.ListenAndServe(":3000", router); err != nil {
+	slog.Info("server started, metrics on http://localhost:8081/metrics")
+	if err := http.ListenAndServe(":8081", router); err != nil {
 		panic(err)
 	}
 }

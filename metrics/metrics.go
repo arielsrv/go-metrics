@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type MetricCollector interface {
+type Metrics interface {
 	IncrementCounter(metricName string, tags ...Tags)
 	IncrementCounterFunc(metricName string, counterFunc CounterFunc)
 	RecordExecutionTime(metricName string, duration time.Duration, tags ...Tags)

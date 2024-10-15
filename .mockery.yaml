@@ -1,5 +1,5 @@
 filename: "mock_{{.InterfaceName}}.go"
-dir: "resources/mocks/{{.InterfaceDirRelative}}"
+dir: "mocks/{{.InterfaceDirRelative}}"
 mockname: "Mock{{.InterfaceName}}"
 outpkg: "{{.PackageName}}"
 all: True
